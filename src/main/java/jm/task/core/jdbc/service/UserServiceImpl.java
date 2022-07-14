@@ -21,6 +21,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveUser(String name, String lastName, byte age) {
         users.saveUser(name, lastName, age);
+        System.out.println("User '" + name + "' has been added to table.");
     }
 
     @Override
