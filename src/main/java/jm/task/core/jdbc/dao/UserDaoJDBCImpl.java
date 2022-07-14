@@ -3,16 +3,13 @@ package jm.task.core.jdbc.dao;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
-    private final String tableName = "users";
     private final String schemaName = "preproject";
+    private final String tableName = schemaName + ".users";
 
     public UserDaoJDBCImpl() {
         try (Connection connection = Util.getConnection();
@@ -27,7 +24,6 @@ public class UserDaoJDBCImpl implements UserDao {
     public void createUsersTable() {
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
             statement.execute("CREATE TABLE IF NOT EXISTS " + tableName +
                     "(id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
                     "name VARCHAR(45), " +
@@ -43,7 +39,6 @@ public class UserDaoJDBCImpl implements UserDao {
     public void dropUsersTable() {
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
             statement.execute("DROP TABLE IF EXISTS " + tableName + ";");
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -53,10 +48,13 @@ public class UserDaoJDBCImpl implements UserDao {
     @Override
     public void saveUser(String name, String lastName, byte age) {
         try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
-            statement.execute("INSERT INTO " + tableName +
-                    "(name, last_name, age) VALUES ('" + name + "', '" + lastName + "', " + age + ");");
+             PreparedStatement ps = connection.prepareStatement(
+                     "INSERT INTO " + tableName + "(name, last_name, age) VALUES (?, ?, ?);")) {
+            ps.setString(1, name);
+            ps.setString(2, lastName);
+            ps.setByte(3, age);
+
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -66,7 +64,6 @@ public class UserDaoJDBCImpl implements UserDao {
     public void removeUserById(long id) {
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
             statement.execute("DELETE FROM " + tableName + " WHERE id=" + id + ";");
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -79,7 +76,6 @@ public class UserDaoJDBCImpl implements UserDao {
 
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName + ";");
 
             while (resultSet.next()) {
@@ -101,7 +97,6 @@ public class UserDaoJDBCImpl implements UserDao {
     public void cleanUsersTable() {
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("USE " + schemaName + ";");
             statement.execute("DELETE FROM " + tableName + ";");
         } catch (SQLException e) {
             throw new RuntimeException(e);
