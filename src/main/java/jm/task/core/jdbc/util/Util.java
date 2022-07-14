@@ -9,7 +9,7 @@ public class Util {
         Connection connection;
 
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306", "root", "");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
