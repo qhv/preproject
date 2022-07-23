@@ -8,6 +8,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 
+import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -20,16 +21,33 @@ public class Util {
     private final static String USER_NAME = "pp_user";
     private final static String PASSWORD = "pa$$";
 
+    private static Connection proxyConnection;
     private static Connection connection;
 
     /**
      * JDBC connection functions
      */
-    public static void openConnection() {
-        if (connection != null) return;
+    static {
+        initConnection();
+    }
 
+    private static void initConnection() {
+        connection = openConnection();
+        proxyConnection = (Connection) Proxy.newProxyInstance(Util.class.getClassLoader(),
+                new Class[]{Connection.class},
+                (proxy, method, args) -> method.getName().equals("close")
+                        ? reinstateConnection((Connection) proxy)
+                        : method.invoke(connection, args));
+    }
+
+    private static Void reinstateConnection(Connection connection) {
+        proxyConnection = connection;
+        return null;
+    }
+
+    private static Connection openConnection() {
         try {
-            connection = DriverManager.getConnection(URL, USER_NAME, PASSWORD);
+            return DriverManager.getConnection(URL, USER_NAME, PASSWORD);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -46,13 +64,19 @@ public class Util {
     }
 
     public static Connection getConnection() {
-        return connection;
+        while (proxyConnection == null) {
+            // Здесь должен быть await(), но я пока не до конца понял как это реализовать
+        }
+        Connection storedProxyConnection = proxyConnection;
+        proxyConnection = null;
+        return storedProxyConnection;
     }
 
     /**
-     *  Hibernate connection functions
+     * Hibernate connection functions
      */
     private static SessionFactory sessionFactory;
+
     public static SessionFactory getSessionFactory() {
         if (sessionFactory != null) return sessionFactory;
 
