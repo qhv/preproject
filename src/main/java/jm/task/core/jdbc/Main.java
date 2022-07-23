@@ -2,22 +2,32 @@ package jm.task.core.jdbc;
 
 import jm.task.core.jdbc.service.UserService;
 import jm.task.core.jdbc.service.UserServiceImpl;
+import jm.task.core.jdbc.util.Util;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class Main {
     public static void main(String[] args) {
-        UserService users = new UserServiceImpl();
 
-        users.dropUsersTable();
-        users.createUsersTable();
+        try {
+            UserService users = new UserServiceImpl();
 
-        users.saveUser("Ivan", "Dow", (byte) 3);
-        users.saveUser("Tony", "Smith", (byte) 22);
-        users.saveUser("Catherine", "James", (byte) 18);
-        users.saveUser("Matthew", "Brown", (byte) 107);
+            users.dropUsersTable();
+            users.createUsersTable();
 
-        System.out.println(users.getAllUsers());
+            users.saveUser("Ivan", "Dow", (byte) 3);
+            users.saveUser("Tony", "Smith", (byte) 22);
+            users.saveUser("Catherine", "James", (byte) 18);
+            users.saveUser("Matthew", "Brown", (byte) 107);
 
-        users.cleanUsersTable();
-        users.dropUsersTable();
+            System.out.println(users.getAllUsers());
+
+            users.cleanUsersTable();
+            users.dropUsersTable();
+        } finally {
+            Util.closeConnection();
+        }
     }
 }
